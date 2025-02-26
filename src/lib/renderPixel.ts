@@ -21,8 +21,8 @@ function sample(normal: Vec): Vec {
   const r2 = Math.random();
   const theta = Math.acos(Math.sqrt(1 - r1));
   const phi = 2 * Math.PI * r2;
-  const x = Math.cos(phi) + Math.sin(theta);
-  const y = Math.sin(phi) + Math.sin(theta);
+  const x = Math.cos(phi) * Math.sin(theta);
+  const y = Math.sin(phi) * Math.sin(theta);
   const z = Math.cos(theta);
   const [tangent, bitangent] = orthonormalBasis(normal);
   const sampledDirection = add(

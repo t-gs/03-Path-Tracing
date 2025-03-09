@@ -27,13 +27,16 @@ export class Sphere implements RTObject {
       return [];
     }
 
+    const t1 = (-b - Math.sqrt(discriminant)) / (2 * a);
     const t2 = (-b + Math.sqrt(discriminant)) / (2 * a);
-    if (t2 < 0) {
+    const tMin = t1 < t2 ? t1 : t2;
+    const tMax = t1 > t2 ? t1 : t2;
+
+    if (tMax < 0) {
       return [];
     }
 
-    const t1 = (-b - Math.sqrt(discriminant)) / (2 * a);
-    if (t1 < 0) {
+    if (tMin < 0) {
       result.push({
         distance: 0,
         normal: mul(ray.direction, -1),
@@ -41,22 +44,22 @@ export class Sphere implements RTObject {
         front: true,
       });
     } else {
-      const normalX = 2 * (origin.x + ray.direction.x * t1);
-      const normalY = 2 * (origin.y + ray.direction.y * t1);
-      const normalZ = 2 * (origin.z + ray.direction.z * t1);
+      const normalX = 2 * (origin.x + ray.direction.x * tMin);
+      const normalY = 2 * (origin.y + ray.direction.y * tMin);
+      const normalZ = 2 * (origin.z + ray.direction.z * tMin);
       result.push({
-        distance: t1,
+        distance: tMin,
         normal: normalize(v(normalX, normalY, normalZ)),
         color: this.color,
         front: true,
       });
     }
 
-    const normalX = 2 * (origin.x + ray.direction.x * t2);
-    const normalY = 2 * (origin.y + ray.direction.y * t2);
-    const normalZ = 2 * (origin.z + ray.direction.z * t2);
+    const normalX = 2 * (origin.x + ray.direction.x * tMax);
+    const normalY = 2 * (origin.y + ray.direction.y * tMax);
+    const normalZ = 2 * (origin.z + ray.direction.z * tMax);
     result.push({
-      distance: t2,
+      distance: tMax,
       normal: normalize(v(normalX, normalY, normalZ)),
       color: this.color,
       front: false,

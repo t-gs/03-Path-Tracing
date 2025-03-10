@@ -1,17 +1,22 @@
+import { DummyTexture, Texture } from "./Texture";
 import { Color, Intersection, Ray, RTObject, Vec } from "./types";
-import { mul, normalize, sq, sub, v } from "./util";
+import { add, c, mul, normalize, sq, sub, v } from "./util";
 
 export class Sphere implements RTObject {
+  private readonly texture: Texture;
+
   constructor(
     public position: Vec,
     public radius: number,
-    public color: Color
-  ) {}
+    public insideColor: Color,
+    color: Color | Texture = insideColor
+  ) {
+    this.texture = color instanceof Texture ? color : new DummyTexture(color);
+  }
 
   intersect(ray: Ray): Intersection[] {
     const result: Intersection[] = [];
 
-    // 편의상 ray와 sphere의 위치에서 sphere의 위치를 빼서 sphere를 원점으로 만듦
     const origin = sub(ray.origin, this.position);
 
     const a = sq(ray.direction.x) + sq(ray.direction.y) + sq(ray.direction.z);
@@ -29,8 +34,7 @@ export class Sphere implements RTObject {
 
     const t1 = (-b - Math.sqrt(discriminant)) / (2 * a);
     const t2 = (-b + Math.sqrt(discriminant)) / (2 * a);
-    const tMin = t1 < t2 ? t1 : t2;
-    const tMax = t1 > t2 ? t1 : t2;
+    const [tMin, tMax] = t1 < t2 ? [t1, t2] : [t2, t1];
 
     if (tMax < 0) {
       return [];
@@ -40,7 +44,7 @@ export class Sphere implements RTObject {
       result.push({
         distance: 0,
         normal: mul(ray.direction, -1),
-        color: this.color,
+        color: this.insideColor,
         front: true,
       });
     } else {
@@ -50,7 +54,7 @@ export class Sphere implements RTObject {
       result.push({
         distance: tMin,
         normal: normalize(v(normalX, normalY, normalZ)),
-        color: this.color,
+        color: this.color(add(ray.origin, mul(ray.direction, tMin))),
         front: true,
       });
     }
@@ -61,10 +65,23 @@ export class Sphere implements RTObject {
     result.push({
       distance: tMax,
       normal: normalize(v(normalX, normalY, normalZ)),
-      color: this.color,
+      color: this.color(add(ray.origin, mul(ray.direction, tMax))),
       front: false,
     });
 
     return result;
+  }
+
+  color(position: Vec): Color {
+    const localPos = sub(position, this.position);
+    const dir = normalize(localPos);
+
+    const theta = Math.atan2(dir.x, dir.y);
+    const phi = Math.acos(dir.z);
+
+    const u = (theta + Math.PI) / (2 * Math.PI);
+    const v = phi / Math.PI;
+
+    return c(this.texture.r(u, v), this.texture.g(u, v), this.texture.b(u, v));
   }
 }
